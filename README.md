@@ -1,38 +1,36 @@
 # AHC056 Solver
 
-C++17 solver for AtCoder Heuristic Contest 056, **Grid Turing Robot**.
+AtCoder Heuristic Contest 056 **「Grid Turing Robot」** 用の C++17 ソルバです。
 
-## Overview
+## 概要
 
-AHC056 asks you to move a robot through a sequence of target cells by assigning colors and state-transition rules to the grid.
+グリッド上のロボットが指定された目的地を順番に通過できるように、各マスの色と状態遷移規則を構成する問題です。
 
-This program constructs a route through the required targets and converts that route into the transition rules used by the robot.
+このコードでは、目的地を順番に結ぶ経路を作成し、その経路をロボットが実行できる色・状態遷移規則へ変換します。
 
-Problem: https://atcoder.jp/contests/ahc056
+問題ページ: <https://atcoder.jp/contests/ahc056>
 
-## Approach
+## 解法
 
-For each pair of consecutive targets, the solver searches among shortest paths and uses additional costs to prefer routes whose cells can be reused with simple behavior.
+各目的地間では最短経路を保ちながら、同じマスをできるだけ単純な挙動で再利用できるように経路を選びます。
 
-After the route is fixed, the observed straight/turn behavior is converted into color and state transitions. Short left/right turn patterns share compact DFA states, while irregular cases use dedicated fallback states.
+経路が決まった後、直進や左右の旋回パターンを色と状態遷移へ変換します。短い旋回パターンは状態を共有し、それ以外は個別の状態で処理しています。
 
-More detailed notes are available in [`docs/approach.md`](docs/approach.md).
-
-## Build
+## ビルド
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ```
 
-Or directly with g++:
+`g++` で直接ビルドする場合:
 
 ```bash
 g++ -std=c++17 -O2 -Wall -Wextra -Wpedantic src/main.cpp -o ahc056_solver
 ```
 
-The solver reads one instance from standard input and writes the solution to standard output.
+標準入力から1ケースを読み込み、標準出力へ解を出力します。
 
-## License
+## ライセンス
 
-MIT License. See [`LICENSE`](LICENSE).
+MIT License。詳細は [`LICENSE`](LICENSE) を参照してください。

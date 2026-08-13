@@ -1,62 +1,24 @@
-# Approach
+# 解法メモ
 
-## 1. Route construction
+## 経路の作成
 
-For every consecutive target pair, the solver first computes unweighted grid distances from both ends with BFS. A Dijkstra search then runs over `(row, column, previous-direction)` states while enforcing
+各目的地間では BFS で最短距離を求め、その最短距離を保つ経路の中から、後で色・状態遷移へ変換しやすい経路を選びます。
 
-```text
-dist_from_start[current] + 1 + dist_to_goal[next] = segment_shortest_distance
-```
+同じマスを何度も通る場合、直進用のマスを旋回にも使うような複雑な使い方を避けるため、経路探索時に追加コストを与えています。
 
-for every transition. Therefore the heuristic cost only chooses **which shortest path** to use; it does not increase the number of moves for the segment.
+## 経路から状態遷移への変換
 
-The extra cost favors stable semantic roles for cells. Reusing a historically straight-through cell as a turning cell (or the reverse) receives a large penalty. Smaller penalties prefer straight movement and lightly discourage repeatedly routing through already-used cells.
+完成した経路について、各移動を以下のように分類します。
 
-## 2. Event classification
+- 直進
+- 左折
+- 右折
+- 逆方向への移動
 
-After all target-to-target segments are concatenated, every movement step is classified relative to the previous direction as one of:
+単純な直進だけを行うマスはそのまま扱い、短い左右旋回パターンについては複数のマスで状態を共有します。
 
-- straight
-- left turn
-- right turn
-- backtrack
+それ以外の複雑なマスは無理に圧縮せず、個別の状態を割り当てています。
 
-Each visited grid cell is then summarized from the sequence of events observed on that cell.
+最後に、構成した経路をもう一度たどりながら、各色・状態に対する塗り替え、状態遷移、移動方向を出力します。
 
-## 3. Compact cells and special cells
-
-Cells are split into three categories.
-
-### Straight cells
-
-Cells that only need straight-through behavior require no turn history.
-
-### Short L/R-pattern cells
-
-A cell used only for left/right turns, with at most four such events, is represented by its remaining L/R suffix. All suffixes up to length four form a small DFA:
-
-```text
-"LRR" -> consume L -> "RR" -> consume R -> "R" -> consume R -> ""
-```
-
-This shares states between cells with equal remaining behavior.
-
-### Special cells
-
-Cells with a backtrack, a mixture of straight and turn behavior, or too many turns are deliberately not compressed. They receive visit-indexed colors instead. This fallback keeps the common representation compact while retaining an escape hatch for irregular cases.
-
-## 4. Rule generation
-
-The solver walks the constructed route once more while tracking the current color of each cell and a four-state direction encoding. For each `(color, internal state)` pair encountered, it emits the corresponding repaint, state transition, and absolute movement direction.
-
-## Trade-offs
-
-This is a heuristic constructive solution. The large role-conflict penalty is intentionally simple and was chosen to reduce difficult-to-compress cells rather than to optimize a smooth mathematical objective. The DFA bound of four turn events is likewise a pragmatic compression boundary.
-
-## Possible improvements
-
-- benchmark parameter choices over a fixed seed set
-- optimize the route and automaton jointly instead of sequentially
-- replace the hard role-conflict penalty with a learned or adaptive cost
-- search for larger shared automata across special-cell visit sequences
-- add a local simulator-based regression suite for generated rules
+この実装はコンテスト用のヒューリスティック解法であり、経路と状態数を同時に最適化するものではありません。
